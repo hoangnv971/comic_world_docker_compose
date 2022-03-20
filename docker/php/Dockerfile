@@ -1,8 +1,17 @@
 FROM php:8.1-fpm
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+
+ARG NODE_VERSION=16
+
+WORKDIR /var/www/html
+
 RUN pecl install xdebug
 RUN docker-php-ext-enable xdebug
 RUN docker-php-ext-install pdo pdo_mysql
+RUN php -r "readfile('https://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer 
+
+RUN curl -sL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm 
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -20,3 +29,8 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     g++
 
+
+RUN useradd -m -g www-data php && groupmod -g 1000 www-data
+# RUN usermod -u 1000 php && 
+
+USER php 
